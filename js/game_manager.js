@@ -25,8 +25,6 @@ GameManager.prototype.init = function () {
   this.gameTimer;
 
   this.basketStartPosition = { x: 0, y: 1 };
-
-  // Добавляем звук
     this.sounds = [
     new Audio('sound/dai.wav'),
     new Audio('sound/dai2.wav'),
@@ -34,8 +32,8 @@ GameManager.prototype.init = function () {
     new Audio('sound/dai4.wav')
   ];
   this.soundCatch = new Audio('sound/ples.wav');
-  this.soundFail = new Audio('sound/fail.mp3');  // звук падения (новый)
-  this.paused = false; // флаг паузы (добавим)
+  this.soundFail = new Audio('sound/fail.mp3'); 
+  this.paused = false;
   
 };
 
@@ -54,6 +52,12 @@ GameManager.prototype.setup = function () {
   this.HTMLredraw = new HTMLredraw();
 
   this.touchscreenModification();
+    this.resize();
+    var self = this;
+    window.addEventListener('resize', function() { self.resize(); });
+    window.addEventListener('orientationchange', function() { 
+        setTimeout(function() { self.resize(); }, 300);
+    });
 };
 
 GameManager.prototype.isMobile = function() {
@@ -153,6 +157,25 @@ GameManager.prototype.upLevel = function () {
   this.suspendGear();
 };
 
+GameManager.prototype.resize = function() {
+    var gameWrap = document.getElementById('game-wrap');
+    if (!gameWrap) return;
+    var origWidth = 572;
+    var origHeight = 350;
+    var winWidth = window.innerWidth;
+    var winHeight = window.innerHeight;
+    var scaleX = winWidth / origWidth;
+    var scaleY = winHeight / origHeight;
+    var scale = Math.min(scaleX, scaleY);
+    scale = Math.min(scale, 1);
+    gameWrap.style.transform = 'scale(' + scale + ')';
+    gameWrap.style.transformOrigin = 'top left';
+    var offsetX = (winWidth - origWidth * scale) / 2;
+    var offsetY = (winHeight - origHeight * scale) / 2;
+    gameWrap.style.marginLeft = offsetX + 'px';
+    gameWrap.style.marginTop = offsetY + 'px';
+};
+
 GameManager.prototype.updateScore = function (data) {
     if (this.grid.list[data.egg].x == this.basket.x && this.grid.list[data.egg].y == this.basket.y) {
         this.score += this.point;
@@ -178,8 +201,8 @@ GameManager.prototype.resetAllEggs = function() {
     for (var i = 0; i < this.count; i++) {
         var chicken = this.chickens[i];
         if (chicken.egg) {
-            chicken.egg.stop();          // остановить таймер
-            chicken.egg.step = 0;        // сбросить шаг
+            chicken.egg.stop();       
+            chicken.egg.step = 0;     
             this.HTMLredraw.updateEggPosition({
                 egg: i,
                 position: 0
@@ -234,9 +257,7 @@ GameManager.prototype.runEgg = function(chicken) {
 };
 
 GameManager.prototype.gameOver = function() {
-    this.haltGear();  // остановить генератор, установить over = true
-
-    // Остановить все движущиеся яйца
+    this.haltGear(); 
     for (var i = 0; i < this.count; i++) {
         var chicken = this.chickens[i];
         if (chicken.egg && chicken.egg.stop) {
@@ -244,7 +265,7 @@ GameManager.prototype.gameOver = function() {
         }
     }
 
-    this.paused = false; // снять блокировку паузы
+    this.paused = false;
     this.HTMLredraw.gameOver();
 };
 
@@ -267,11 +288,9 @@ GameManager.prototype.api = function(method, data) {
       break;
     case 'updateEggPosition':
     this.HTMLredraw.updateEggPosition(data);
-    // Воспроизводим звук для конкретного яйца, если оно видимо (position > 0)
     if (data.position > 0 && this.sounds[data.egg]) {
         this.sounds[data.egg].currentTime = 0;
         this.sounds[data.egg].play().catch(function(e) {
-            // Игнорируем ошибки автовоспроизведения
         });
     }
     break;
