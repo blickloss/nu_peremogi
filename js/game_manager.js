@@ -53,9 +53,16 @@ GameManager.prototype.setup = function () {
 
   this.touchscreenModification();
     this.resize();
+
     var self = this;
-    window.addEventListener('resize', function() { self.resize(); });
-    window.addEventListener('orientationchange', function() { 
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() { self.resize(); });
+        window.visualViewport.addEventListener('scroll', function() { self.resize(); });
+    } else {
+        window.addEventListener('resize', function() { self.resize(); });
+    }
+    window.addEventListener('orientationchange', function() {
         setTimeout(function() { self.resize(); }, 300);
     });
 };
@@ -160,10 +167,12 @@ GameManager.prototype.upLevel = function () {
 GameManager.prototype.resize = function() {
     var gameWrap = document.getElementById('game-wrap');
     if (!gameWrap) return;
+
     var origWidth = 572;
     var origHeight = 350;
-    var winWidth = window.innerWidth;
-    var winHeight = window.innerHeight;
+    var viewport = window.visualViewport || window;
+    var winWidth = viewport.width;
+    var winHeight = viewport.height;
     var scaleX = winWidth / origWidth;
     var scaleY = winHeight / origHeight;
     var scale = Math.min(scaleX, scaleY, 1); 
