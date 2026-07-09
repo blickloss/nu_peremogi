@@ -166,14 +166,14 @@ GameManager.prototype.resize = function() {
     var winHeight = window.innerHeight;
     var scaleX = winWidth / origWidth;
     var scaleY = winHeight / origHeight;
-    var scale = Math.min(scaleX, scaleY);
-    scale = Math.min(scale, 1);
-    gameWrap.style.transform = 'scale(' + scale + ')';
-    gameWrap.style.transformOrigin = 'top left';
-    var offsetX = (winWidth - origWidth * scale) / 2;
-    var offsetY = (winHeight - origHeight * scale) / 2;
-    gameWrap.style.marginLeft = offsetX + 'px';
-    gameWrap.style.marginTop = offsetY + 'px';
+    var scale = Math.min(scaleX, scaleY, 1); 
+    gameWrap.style.transform = '';
+    gameWrap.style.margin = '0';
+    gameWrap.style.position = 'absolute';
+    gameWrap.style.left = '50%';
+    gameWrap.style.top = '50%';
+    gameWrap.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+    gameWrap.style.transformOrigin = 'center center';
 };
 
 GameManager.prototype.updateScore = function (data) {
