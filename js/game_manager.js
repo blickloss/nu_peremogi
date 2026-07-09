@@ -32,7 +32,8 @@ GameManager.prototype.init = function () {
     new Audio('sound/dai4.wav')
   ];
   this.soundCatch = new Audio('sound/ples.wav');
-  this.soundFail = new Audio('sound/fail.mp3'); 
+  this.soundFail = new Audio('sound/fail.mp3');
+  this.soundLose = new Audio('sound/hru.mp3');
   this.paused = false;
   
 };
@@ -115,7 +116,6 @@ GameManager.prototype.reStart = function () {
 GameManager.prototype.runGear = function () {
     console.log('runGear: called, gameTimer =', this.gameTimer);
     var self = this;
-    // Убедимся, что старый таймер остановлен
     if (this.gameTimer) {
         clearInterval(this.gameTimer);
         this.gameTimer = null;
@@ -275,12 +275,41 @@ GameManager.prototype.gameOver = function() {
     }
 
     this.paused = false;
+	this.soundLose.currentTime = 0;
+    this.soundLose.play().catch(function(e) {});
     this.HTMLredraw.gameOver();
 };
 
 GameManager.prototype.gameWin = function() {
-  this.haltGear();
-  this.HTMLredraw.gameWin();
+    this.haltGear();
+    for (var i = 0; i < this.count; i++) {
+        var chicken = this.chickens[i];
+        if (chicken.egg && chicken.egg.stop) {
+            chicken.egg.stop();
+        }
+    }
+
+    var video = document.getElementById('winVideo');
+    if (video) {
+        video.style.display = 'block';
+        video.play().catch(function(e) {
+            console.log('Автовоспроизведение заблокировано, нажмите кнопку Play на видео');
+        });
+        video.addEventListener('ended', function() {
+            if (confirm('Хотите сыграть ещё раз?')) {
+                location.reload();
+            }
+        });
+        video.onerror = function() {
+            console.error('Не удалось загрузить видео. Проверьте путь к файлу.');
+        };
+    } else {
+        console.warn('Элемент #winVideo не найден в HTML.');
+        this.HTMLredraw.gameWin();
+    }
+
+    var gameWrap = document.getElementById('game-wrap');
+    if (gameWrap) gameWrap.style.opacity = '0.3';
 };
 
 GameManager.prototype.api = function(method, data) {
@@ -311,22 +340,21 @@ GameManager.prototype.api = function(method, data) {
 };
 
 GameManager.prototype.touchscreenModification = function() {
-  var buttons = document.querySelector('#controls').getElementsByTagName('a');
-  var restartBtn = document.querySelector('.restart-game');
-if (restartBtn) {
-    restartBtn.onclick = function() {
-        self.move({ type: 'common', key: 'restart' });
-        return false;
-    };
-}
-  var self = this;
-  for (var i = 0; i < buttons.length; i++) {
-    buttons[i].onclick = function() {
-      var data = { x: this.getAttribute('data-x'), y: this.getAttribute('data-y'), type: 'button' };
-      self.move(data);
-      return false;
-    };
-  }
-
-  this.HTMLredraw.mobileVersion();
+    var self = this;
+    var buttons = document.querySelector('#controls').getElementsByTagName('a');
+    var restartBtn = document.querySelector('.restart-game');
+    if (restartBtn) {
+        restartBtn.onclick = function() {
+            self.move({ type: 'common', key: 'restart' });
+            return false;
+        };
+    }
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].onclick = function() {
+            var data = { x: this.getAttribute('data-x'), y: this.getAttribute('data-y'), type: 'button' };
+            self.move(data);
+            return false;
+        };
+    }
+    this.HTMLredraw.mobileVersion();
 };
